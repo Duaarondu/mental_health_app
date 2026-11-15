@@ -1,0 +1,221 @@
+:root {
+    --green: #4f7c6b;
+    --green-dark: #3b5f52;
+    --green-light: #e6efe9;
+    --bg: #f7f5f0;
+    --text: #2e3a35;
+    --muted: #6b7570;
+    --white: #ffffff;
+    --error: #b3473b;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* ---------- Header ---------- */
+.hero {
+    background: linear-gradient(135deg, var(--green), #7aa595);
+    color: var(--white);
+    padding: 20px 8% 80px;
+}
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 60px;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.nav-links a {
+    color: var(--white);
+    text-decoration: none;
+    margin-left: 24px;
+    opacity: 0.9;
+}
+
+.nav-links a:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.hero-text h1 {
+    font-size: 2.4rem;
+    margin-bottom: 12px;
+}
+
+.hero-text p {
+    font-size: 1.1rem;
+    max-width: 520px;
+    margin-bottom: 28px;
+    opacity: 0.95;
+}
+
+/* ---------- Layout ---------- */
+main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+section {
+    padding: 56px 0 8px;
+}
+
+h2 {
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+    color: var(--green-dark);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+    display: inline-block;
+    background: var(--white);
+    color: var(--green-dark);
+    border: none;
+    padding: 12px 26px;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+form .btn {
+    background: var(--green);
+    color: var(--white);
+    margin-top: 20px;
+}
+
+form .btn:hover {
+    background: var(--green-dark);
+}
+
+/* ---------- Resource cards ---------- */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.card h3 {
+    margin-bottom: 8px;
+    color: var(--green-dark);
+}
+
+.card p {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+/* ---------- Form ---------- */
+.panel {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin: 14px 0 6px;
+}
+
+select,
+input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cfd8d3;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+select:focus,
+input:focus {
+    outline: 2px solid var(--green);
+    border-color: transparent;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.message {
+    margin-top: 14px;
+    font-weight: 600;
+    min-height: 1.5em;
+}
+
+.message.success { color: var(--green-dark); }
+.message.error   { color: var(--error); }
+
+/* ---------- Appointment list ---------- */
+.list {
+    list-style: none;
+}
+
+.list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.list li:last-child {
+    border-bottom: none;
+}
+
+.tag {
+    background: var(--green-light);
+    color: var(--green-dark);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.empty {
+    color: var(--muted);
+}
+
+/* ---------- Footer ---------- */
+footer {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 600px) {
+    .row { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .hero-text h1 { font-size: 1.8rem; }
+}
