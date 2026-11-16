@@ -26,3 +26,28 @@ export function CloseIcon({ size = 20 }) {
     </svg>
   );
 }
+
+// A simple face for the 1-5 mood scale: the mouth goes from a frown (1) to a big smile (5)
+export function MoodFace({ score, size = 36 }) {
+  const curve = { 1: -5, 2: -2.5, 3: 0, 4: 2.5, 5: 5 }[score] ?? 0;
+  const mouth = `M8 ${15 - curve / 2} Q12 ${15 + curve} 16 ${15 - curve / 2}`;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"
+      strokeLinecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="9" cy="9.5" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="9.5" r="1.1" fill="currentColor" stroke="none" />
+      <path d={mouth} />
+    </svg>
+  );
+}
+
+export function LockIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  );
+}

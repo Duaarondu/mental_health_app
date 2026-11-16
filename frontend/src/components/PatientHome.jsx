@@ -1,13 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
-import { cancelAppointment, getAppointments } from "../api.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { cancelAppointment, getAppointments, getJournal } from "../api.js";
 import { formatWhen, greeting, parseLocal } from "../format.js";
 import AppointmentList from "./AppointmentList.jsx";
 import BookingForm from "./BookingForm.jsx";
+import Journal from "./Journal.jsx";
+import MoodCheckIn from "./MoodCheckIn.jsx";
 import ResourceList from "./ResourceList.jsx";
 
-export default function PatientHome({ user }) {
+export default function PatientHome({ user, onCrisis }) {
   const [appointments, setAppointments] = useState([]);
+  const [entries, setEntries] = useState([]);
+  const [journalMood, setJournalMood] = useState(null);
   const [error, setError] = useState("");
+  const journalTextRef = useRef(null);
 
   const load = useCallback(() => {
     getAppointments()
@@ -18,7 +23,21 @@ export default function PatientHome({ user }) {
       .catch((err) => setError(err.message));
   }, []);
 
+  const loadJournal = useCallback(() => {
+    getJournal()
+      .then(setEntries)
+      .catch((err) => setError(err.message));
+  }, []);
+
   useEffect(load, [load]);
+  useEffect(loadJournal, [loadJournal]);
+
+  // "Write about it" after a check-in: same mood, jump to the journal box
+  function writeAbout(score) {
+    setJournalMood(score);
+    journalTextRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    journalTextRef.current?.focus({ preventScroll: true });
+  }
 
   async function handleCancel(appt) {
     if (!window.confirm(`Cancel your session on ${formatWhen(appt.scheduledTime)}?`)) return;
@@ -37,7 +56,7 @@ export default function PatientHome({ user }) {
     <main className="container page stack-lg">
       <div>
         <h1>{greeting()}, {user.firstName}</h1>
-        <p className="muted lead">Take a moment. How are you feeling right now?</p>
+        <p className="muted lead">Take a moment for yourself.</p>
       </div>
 
       {user.anonymous && (
@@ -46,6 +65,8 @@ export default function PatientHome({ user }) {
         </p>
       )}
       {error && <p className="error-text" role="alert">{error}</p>}
+
+      <MoodCheckIn entries={entries} onSaved={loadJournal} onWrite={writeAbout} onCrisis={onCrisis} />
 
       <div className="row-lg">
         <section className="card next-session">
@@ -61,6 +82,9 @@ export default function PatientHome({ user }) {
         </section>
         <BookingForm onBooked={load} />
       </div>
+
+      <Journal ref={journalTextRef} entries={entries} mood={journalMood} onMoodChange={setJournalMood}
+        onSaved={loadJournal} />
 
       <div className="row-lg">
         <AppointmentList

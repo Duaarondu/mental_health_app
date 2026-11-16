@@ -28,3 +28,13 @@ export function todayString() {
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+
+// True if "2026-11-19T15:00:00" is today in the browser's time
+export function isToday(isoDateTime) {
+  return parseLocal(isoDateTime).toDateString() === new Date().toDateString();
+}
+
+// -> "3:00 PM"
+export function formatTime(isoDateTime) {
+  return parseLocal(isoDateTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}

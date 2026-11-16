@@ -108,7 +108,7 @@ export default function App() {
   return (
     <>
       <Header user={user} page={page} onNavigate={setPage} onCrisis={openCrisis} onLogout={handleLogout} />
-      {user.role === "Therapist" ? <TherapistDashboard user={user} /> : <PatientHome user={user} />}
+      {user.role === "Therapist" ? <TherapistDashboard user={user} /> : <PatientHome user={user} onCrisis={openCrisis} />}
       <Footer />
       {crisis}
     </>
