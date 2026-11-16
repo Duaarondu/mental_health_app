@@ -2,14 +2,14 @@ import { useState } from "react";
 import { login, startAnonymous } from "../api.js";
 import AccountTypeToggle from "./AccountTypeToggle.jsx";
 
-export default function LoginPage({ onLoggedIn, onAnonymousStarted, onShowRegister }) {
+export default function LoginPage({ onLoggedIn, onAnonymousStarted, onShowRegister, startAnonymous = false }) {
   const [accountType, setAccountType] = useState("patient");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const [showAnon, setShowAnon] = useState(false);
+  const [showAnon, setShowAnon] = useState(startAnonymous);
   const [nickname, setNickname] = useState("");
   const [anonError, setAnonError] = useState("");
 
