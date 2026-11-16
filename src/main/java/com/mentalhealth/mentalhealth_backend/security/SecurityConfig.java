@@ -40,9 +40,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**", "/api/home", "/api/resources", "/api/therapists").permitAll()
                 // Therapist-only pages
                 .requestMatchers("/api/therapist/**").hasRole("THERAPIST")
-                // Only patients (clients and anonymous guests) can book or raise a crisis alert
+                // Only patients (clients and anonymous guests) can book, raise a crisis alert
+                // or keep a journal
                 .requestMatchers(HttpMethod.POST, "/api/appointments").hasRole("CLIENT")
                 .requestMatchers("/api/crisis/**").hasRole("CLIENT")
+                .requestMatchers("/api/journal", "/api/journal/**").hasRole("CLIENT")
                 // Everything else under /api needs a login
                 .requestMatchers("/api/**").authenticated()
                 // Static files (if any) are public

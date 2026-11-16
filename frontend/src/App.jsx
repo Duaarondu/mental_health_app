@@ -17,6 +17,7 @@ export default function App() {
   const [authView, setAuthView] = useState("landing"); // "landing" | "login" | "register" | "anonymous"
   const [recovery, setRecovery] = useState(null); // shown once after starting anonymously
   const [crisisOpen, setCrisisOpen] = useState(false);
+  const [page, setPage] = useState("dashboard"); // signed in: "home" | "dashboard"
 
   useEffect(() => {
     getMe().then(setUser).catch(() => setUser(null));
@@ -28,8 +29,14 @@ export default function App() {
     } finally {
       setUser(null);
       setAuthView("landing");
+      setPage("dashboard");
     }
   }
+
+  const signedIn = (u) => {
+    setUser(u);
+    setPage("dashboard");
+  };
 
   const openCrisis = () => setCrisisOpen(true);
   const crisis = crisisOpen && <CrisisModal user={user} onClose={() => setCrisisOpen(false)} />;
@@ -62,7 +69,7 @@ export default function App() {
               username={recovery.username}
               code={recovery.recoveryCode}
               onDone={() => {
-                setUser(recovery.user);
+                signedIn(recovery.user);
                 setRecovery(null);
               }}
             />
@@ -70,12 +77,12 @@ export default function App() {
             <LoginPage
               key={authView}
               startAnonymous={authView === "anonymous"}
-              onLoggedIn={setUser}
+              onLoggedIn={signedIn}
               onAnonymousStarted={setRecovery}
               onShowRegister={() => setAuthView("register")}
             />
           ) : (
-            <RegisterPage onLoggedIn={setUser} onShowLogin={() => setAuthView("login")} />
+            <RegisterPage onLoggedIn={signedIn} onShowLogin={() => setAuthView("login")} />
           )}
         </AuthLayout>
         {crisis}
@@ -83,10 +90,25 @@ export default function App() {
     );
   }
 
+  // Signed in, viewing the public home page
+  if (page === "home") {
+    return (
+      <>
+        <LandingPage
+          user={user}
+          onDashboard={() => setPage("dashboard")}
+          onLogout={handleLogout}
+          onCrisis={openCrisis}
+        />
+        {crisis}
+      </>
+    );
+  }
+
   return (
     <>
-      <Header user={user} onCrisis={openCrisis} onLogout={handleLogout} />
-      {user.role === "Therapist" ? <TherapistDashboard user={user} /> : <PatientHome user={user} />}
+      <Header user={user} page={page} onNavigate={setPage} onCrisis={openCrisis} onLogout={handleLogout} />
+      {user.role === "Therapist" ? <TherapistDashboard user={user} /> : <PatientHome user={user} onCrisis={openCrisis} />}
       <Footer />
       {crisis}
     </>

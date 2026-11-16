@@ -88,3 +88,14 @@ export const sendCrisisAlert = () => request("/crisis/alert", { method: "POST" }
 export const getCrisisAlerts = () => request("/therapist/alerts");
 export const resolveCrisisAlert = (clientId) =>
   request(`/therapist/alerts/${clientId}/resolve`, { method: "POST" });
+
+// ---------- Mood check-ins & journal (patients) ----------
+
+// Newest first: [{ id, entryDate, moodScore, content }]
+export const getJournal = () => request("/journal");
+
+// moodScore 1-5. Leave content empty for a quick mood check-in.
+export const addJournalEntry = (moodScore, content = "") =>
+  request("/journal", { method: "POST", body: { moodScore, content } });
+
+export const deleteJournalEntry = (id) => request(`/journal/${id}`, { method: "DELETE" });

@@ -230,6 +230,11 @@ input:focus, select:focus, button:focus-visible, a:focus-visible, .modal:focus-v
 /* ---------- Public home page ---------- */
 .header-left { display: flex; align-items: center; gap: 16px; }
 .login-button { min-height: 44px; padding: 0 20px; }
+.brand-button { background: none; border: 0; padding: 0; font: inherit; font-size: 22px; font-weight: 800; color: var(--sage); cursor: pointer; }
+.main-nav { display: flex; gap: 4px; }
+.nav-link { min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: transparent; color: var(--text-2); font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; }
+.nav-link:hover { background: #eef1ec; }
+.nav-link.active { background: var(--sage-soft); color: var(--sage-dark); }
 .landing-hero { background: var(--sage); color: #fff; }
 .landing-hero-inner { padding-top: 64px; padding-bottom: 72px; display: flex; flex-direction: column; gap: 18px; }
 .landing-hero h1 { font-size: clamp(34px, 5vw, 52px); line-height: 1.1; max-width: 760px; }
@@ -271,4 +276,46 @@ input:focus, select:focus, button:focus-visible, a:focus-visible, .modal:focus-v
   .card { padding: 22px; }
   .modal { padding: 24px; }
   .header-name { display: none; }
+}
+
+/* ---------- Mood check-in + journal ---------- */
+.stack-sm { display: flex; flex-direction: column; gap: 10px; }
+.row-sm { display: flex; flex-wrap: wrap; gap: 10px; }
+.mood-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.mood-option {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  min-height: 104px; padding: 14px 8px; border: 1.5px solid var(--line); border-radius: 16px;
+  background: #fff; color: var(--sage-dark); font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.mood-option span { color: var(--text-2); }
+.mood-option:hover:not(:disabled) { background: var(--sage-soft); border-color: var(--sage); }
+.checkin-done { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.checkin-face { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--sage-soft); color: var(--sage-dark); display: inline-flex; align-items: center; justify-content: center; }
+.checkin-summary { font-size: 18px; }
+.gentle-note { padding: 14px 18px; border-radius: 14px; background: var(--ground); color: var(--text-2); }
+.link-button.inline { display: inline; align-self: auto; }
+
+.journal-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.private-note { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--sage-dark); }
+.field-label { font-weight: 700; font-size: 15px; }
+.mood-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mood-chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
+  border: 1.5px solid var(--line); border-radius: 999px; background: #fff; color: var(--text-2);
+  font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.mood-chip:hover { border-color: var(--sage); }
+.mood-chip.active { background: var(--sage-soft); border-color: var(--sage); color: var(--sage-dark); }
+textarea.journal-text { min-height: 150px; padding: 12px 14px; resize: vertical; line-height: 1.5; }
+.journal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.journal-list li { display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-bottom: 1px solid #eef1ec; }
+.journal-list li:last-child { border-bottom: 0; }
+.journal-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.journal-meta .button { margin-left: auto; }
+.journal-mood { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; color: var(--sage-dark); }
+.journal-body { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-2); }
+
+@media (max-width: 600px) {
+  .mood-picker { gap: 6px; }
+  .mood-option { min-height: 92px; padding: 10px 4px; font-size: 13px; }
 }

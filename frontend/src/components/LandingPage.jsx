@@ -11,7 +11,8 @@ const DESCRIPTIONS = {
 };
 
 // The public home page: what everyone sees before signing in.
-export default function LandingPage({ onLogin, onRegister, onAnonymous, onCrisis }) {
+// When someone is signed in (user is set), the same page offers "Dashboard" instead of "Log in".
+export default function LandingPage({ user, onLogin, onRegister, onAnonymous, onDashboard, onLogout, onCrisis }) {
   const [welcome, setWelcome] = useState("");
   const [resources, setResources] = useState([]);
 
@@ -29,11 +30,22 @@ export default function LandingPage({ onLogin, onRegister, onAnonymous, onCrisis
               <HeartIcon color="#3E6B57" />
               MindCare
             </div>
-            <button type="button" className="button outline login-button" onClick={onLogin}>
-              Log in
-            </button>
+            {user ? (
+              <button type="button" className="button outline login-button" onClick={onDashboard}>
+                Dashboard
+              </button>
+            ) : (
+              <button type="button" className="button outline login-button" onClick={onLogin}>
+                Log in
+              </button>
+            )}
           </div>
-          <CrisisButton onClick={onCrisis} />
+          <div className="header-actions">
+            <CrisisButton onClick={onCrisis} />
+            {user && (
+              <button type="button" className="button ghost" onClick={onLogout}>Sign out</button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -46,12 +58,20 @@ export default function LandingPage({ onLogin, onRegister, onAnonymous, onCrisis
               Book sessions with a therapist, check in with yourself, and get help any time you need it. With an
               account or without one.
             </p>
-            <div className="row">
-              <button type="button" className="button light" onClick={onRegister}>Create an account</button>
-              <button type="button" className="button outline-light" onClick={onAnonymous}>
-                Continue anonymously
-              </button>
-            </div>
+            {user ? (
+              <div className="row">
+                <button type="button" className="button light" onClick={onDashboard}>
+                  Go to my dashboard
+                </button>
+              </div>
+            ) : (
+              <div className="row">
+                <button type="button" className="button light" onClick={onRegister}>Create an account</button>
+                <button type="button" className="button outline-light" onClick={onAnonymous}>
+                  Continue anonymously
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -89,11 +109,23 @@ export default function LandingPage({ onLogin, onRegister, onAnonymous, onCrisis
           )}
 
           <section className="card landing-cta">
-            <div>
-              <h2>Ready when you are</h2>
-              <p className="muted">Already have an account? Log in to see your appointments.</p>
-            </div>
-            <button type="button" className="button primary" onClick={onLogin}>Log in</button>
+            {user ? (
+              <>
+                <div>
+                  <h2>Welcome back, {user.firstName}</h2>
+                  <p className="muted">Your appointments and alerts are on your dashboard.</p>
+                </div>
+                <button type="button" className="button primary" onClick={onDashboard}>Go to dashboard</button>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h2>Ready when you are</h2>
+                  <p className="muted">Already have an account? Log in to see your appointments.</p>
+                </div>
+                <button type="button" className="button primary" onClick={onLogin}>Log in</button>
+              </>
+            )}
           </section>
         </div>
       </main>
