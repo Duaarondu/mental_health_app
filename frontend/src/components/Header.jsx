@@ -1,31 +1,24 @@
-import { useEffect, useState } from "react";
-import { getWelcome } from "../api.js";
+import CrisisButton from "./CrisisButton.jsx";
+import { HeartIcon } from "./Icons.jsx";
 
-export default function Header() {
-  const [welcome, setWelcome] = useState("Loading...");
-
-  useEffect(() => {
-    getWelcome()
-      .then(setWelcome)
-      .catch(() => setWelcome("Welcome!"));
-  }, []);
+export default function Header({ user, onCrisis, onLogout }) {
+  const initials = user.anonymous
+    ? "?"
+    : `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase();
 
   return (
-    <header className="hero">
-      <nav className="nav">
-        <span className="logo">MindCare</span>
-        <div className="nav-links">
-          <a href="#resources">Resources</a>
-          <a href="#book">Book</a>
-          <a href="#appointments">My Appointments</a>
+    <header className="site-header">
+      <div className="container header-inner">
+        <div className="brand">
+          <HeartIcon color="#3E6B57" />
+          MindCare
         </div>
-      </nav>
-      <div className="hero-text">
-        <h1>{welcome}</h1>
-        <p>Support is here when you need it. Explore resources or book a session below.</p>
-        <a href="#book" className="btn btn-light">
-          Book an appointment
-        </a>
+        <div className="header-actions">
+          <CrisisButton onClick={onCrisis} />
+          <span className="avatar" aria-hidden="true">{initials}</span>
+          <span className="header-name">{user.displayName}</span>
+          <button type="button" className="button ghost" onClick={onLogout}>Sign out</button>
+        </div>
       </div>
     </header>
   );

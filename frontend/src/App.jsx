@@ -1,48 +1,76 @@
 import { useEffect, useState } from "react";
-import { getAppointments, getResources } from "./api.js";
-import Header from "./components/Header.jsx";
-import ResourceList from "./components/ResourceList.jsx";
-import BookingForm from "./components/BookingForm.jsx";
-import AppointmentList from "./components/AppointmentList.jsx";
+import { getMe, logout } from "./api.js";
+import AuthLayout from "./components/AuthLayout.jsx";
+import CrisisModal from "./components/CrisisModal.jsx";
 import Footer from "./components/Footer.jsx";
+import Header from "./components/Header.jsx";
+import LoginPage from "./components/LoginPage.jsx";
+import PatientHome from "./components/PatientHome.jsx";
+import RecoveryCode from "./components/RecoveryCode.jsx";
+import RegisterPage from "./components/RegisterPage.jsx";
+import TherapistDashboard from "./components/TherapistDashboard.jsx";
 
 export default function App() {
-  // App keeps the data that more than one component needs:
-  // - resources: shown as cards AND used as the booking form's type options
-  // - appointments: shown in the list AND refreshed after the form books one
-  const [resources, setResources] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [error, setError] = useState("");
+  // undefined = still checking, null = signed out, object = signed in
+  const [user, setUser] = useState(undefined);
+  const [authView, setAuthView] = useState("login"); // "login" | "register"
+  const [recovery, setRecovery] = useState(null); // shown once after starting anonymously
+  const [crisisOpen, setCrisisOpen] = useState(false);
 
-  async function loadAppointments() {
+  useEffect(() => {
+    getMe().then(setUser).catch(() => setUser(null));
+  }, []);
+
+  async function handleLogout() {
     try {
-      setAppointments(await getAppointments());
-    } catch (err) {
-      console.error(err);
-      setError("Could not reach the backend. Is Spring Boot running on port 8080?");
+      await logout();
+    } finally {
+      setUser(null);
+      setAuthView("login");
     }
   }
 
-  useEffect(() => {
-    getResources()
-      .then(setResources)
-      .catch((err) => {
-        console.error(err);
-        setError("Could not reach the backend. Is Spring Boot running on port 8080?");
-      });
-    loadAppointments();
-  }, []);
+  const openCrisis = () => setCrisisOpen(true);
+  const crisis = crisisOpen && <CrisisModal user={user} onClose={() => setCrisisOpen(false)} />;
+
+  if (user === undefined) {
+    return <p className="loading">Loading...</p>;
+  }
+
+  if (!user || recovery) {
+    return (
+      <>
+        <AuthLayout onCrisis={openCrisis}>
+          {recovery ? (
+            <RecoveryCode
+              username={recovery.username}
+              code={recovery.recoveryCode}
+              onDone={() => {
+                setUser(recovery.user);
+                setRecovery(null);
+              }}
+            />
+          ) : authView === "login" ? (
+            <LoginPage
+              onLoggedIn={setUser}
+              onAnonymousStarted={setRecovery}
+              onShowRegister={() => setAuthView("register")}
+            />
+          ) : (
+            <RegisterPage onLoggedIn={setUser} onShowLogin={() => setAuthView("login")} />
+          )}
+        </AuthLayout>
+        {crisis}
+      </>
+    );
+  }
 
   return (
     <>
-      <Header />
-      <main>
-        {error && <p className="banner-error">{error}</p>}
-        <ResourceList resources={resources} />
-        <BookingForm resources={resources} onBooked={loadAppointments} />
-        <AppointmentList appointments={appointments} />
-      </main>
+      <Header user={user} onCrisis={openCrisis} onLogout={handleLogout} />
+      {user.role === "Therapist" ? <TherapistDashboard user={user} /> : <PatientHome user={user} />}
       <Footer />
+      {crisis}
     </>
   );
 }

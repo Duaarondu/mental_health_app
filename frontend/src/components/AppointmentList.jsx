@@ -1,42 +1,32 @@
-// "2026-11-20" -> "Fri, Nov 20, 2026"
-function formatDate(isoDate) {
-  if (!isoDate) return "";
-  const [year, month, day] = isoDate.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatWhen } from "../format.js";
 
-// "14:30" -> "2:30 PM"
-function formatTime(time) {
-  if (!time) return "";
-  const [hours, minutes] = time.split(":").map(Number);
-  const suffix = hours >= 12 ? "PM" : "AM";
-  return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${suffix}`;
-}
-
-export default function AppointmentList({ appointments }) {
+// Used by patients (shows the therapist) and therapists (shows the client)
+export default function AppointmentList({ title, appointments, viewer, onCancel, emptyText }) {
   return (
-    <section id="appointments">
-      <h2>My Appointments</h2>
-      <ul className="panel list">
-        {appointments.length === 0 ? (
-          <li className="empty">No appointments booked yet.</li>
-        ) : (
-          appointments.map((appt, index) => (
-            // The backend doesn't give appointments an id, so we use the index.
-            <li key={index}>
-              <span>
-                {formatDate(appt.date)} at {formatTime(appt.time)}
-              </span>
-              <span className="tag">{appt.type}</span>
+    <section className="card stack">
+      <h2>{title}</h2>
+      {appointments.length === 0 ? (
+        <p className="muted">{emptyText}</p>
+      ) : (
+        <ul className="appt-list">
+          {appointments.map((a) => (
+            <li key={a.id}>
+              <div className="appt-main">
+                <strong>{formatWhen(a.scheduledTime)}</strong>
+                <span className="muted">
+                  {viewer === "therapist" ? a.clientName : a.therapistName} · {a.duration} min
+                </span>
+              </div>
+              <span className={`pill pill-${a.status.toLowerCase()}`}>{a.status}</span>
+              {a.status === "Scheduled" && onCancel && (
+                <button type="button" className="button ghost small" onClick={() => onCancel(a)}>
+                  Cancel
+                </button>
+              )}
             </li>
-          ))
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
