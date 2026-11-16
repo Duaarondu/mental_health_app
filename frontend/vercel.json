@@ -1,5 +1,31 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://mindcare-api-602710479795.us-east4.run.app/api/$1" }
+    {
+      "source": "/api/(.*)",
+      "destination": "https://mindcare-api-602710479795.us-east4.run.app/api/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=()"
+        }
+      ]
+    }
   ]
 }

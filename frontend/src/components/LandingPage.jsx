@@ -112,7 +112,7 @@ export default function LandingPage({ user, onLogin, onRegister, onAnonymous, on
             {user ? (
               <>
                 <div>
-                  <h2>Welcome back, {user.firstName}</h2>
+                  <h2>Welcome back, {user.role === "Therapist" ? user.displayName : user.firstName}</h2>
                   <p className="muted">Your appointments and alerts are on your dashboard.</p>
                 </div>
                 <button type="button" className="button primary" onClick={onDashboard}>Go to dashboard</button>

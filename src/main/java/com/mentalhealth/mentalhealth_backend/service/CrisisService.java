@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mentalhealth.mentalhealth_backend.dto.CrisisDtos.CrisisAlertDto;
 import com.mentalhealth.mentalhealth_backend.dto.CrisisDtos.CrisisAlertResult;
 import com.mentalhealth.mentalhealth_backend.model.Appointment;
+import com.mentalhealth.mentalhealth_backend.model.AppointmentStatus;
 import com.mentalhealth.mentalhealth_backend.model.ClientProfile;
 import com.mentalhealth.mentalhealth_backend.model.User;
 import com.mentalhealth.mentalhealth_backend.repository.AppointmentRepository;
@@ -40,6 +41,7 @@ public class CrisisService {
         clientProfileRepository.save(profile);
 
         List<String> therapists = appointmentRepository.findForClient(clientId).stream()
+                .filter(CrisisService::notCancelled)
                 .map(a -> a.getTherapist().getDisplayName())
                 .distinct()
                 .toList();
@@ -50,6 +52,9 @@ public class CrisisService {
     public List<CrisisAlertDto> alertsFor(Integer therapistId) {
         Map<Integer, User> clients = new LinkedHashMap<>();
         for (Appointment a : appointmentRepository.findForTherapist(therapistId)) {
+            if (!notCancelled(a)) {
+                continue;
+            }
             clients.putIfAbsent(a.getClient().getUserId(), a.getClient());
         }
         return clients.values().stream()
@@ -62,9 +67,14 @@ public class CrisisService {
 
     /** The therapist has followed up: clear the alert. Only for their own clients. */
     public void resolve(Integer therapistId, Integer clientId) {
-        if (!appointmentRepository.existsBetween(clientId, therapistId)) {
+        if (!appointmentRepository.existsActiveBetween(clientId, therapistId, AppointmentStatus.Cancelled)) {
             throw ApiException.forbidden("This person isn't one of your clients.");
         }
         clientProfileRepository.findById(clientId).ifPresent(p -> p.setIsCrisisActive(false));
+    }
+
+    /** A cancelled booking doesn't make someone your therapist. */
+    private static boolean notCancelled(Appointment a) {
+        return a.getStatus() != AppointmentStatus.Cancelled;
     }
 }

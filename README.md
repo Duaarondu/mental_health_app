@@ -110,6 +110,10 @@ Passwords are stored as BCrypt hashes. Logins use a session cookie (HttpOnly, Sa
 
 On a public website, set `SEED_DEMO_DATA=false` or choose a private `DEMO_PASSWORD`.
 
+On Cloud Run, the app refuses to start if `DEMO_PASSWORD` (while demo data is on) or `JOURNAL_KEY` is missing, so the public defaults are never used on the live site. Changing `DEMO_PASSWORD` later does not change the password of demo accounts that already exist.
+
+**Abuse limits:** 5 wrong passwords lock that username for 15 minutes; each network address can create 10 accounts an hour (300 in total); each patient can have 3 upcoming sessions. Limits are counted per server, so keep Cloud Run at a few instances: `gcloud run services update mindcare-api --region us-east4 --max-instances=2`.
+
 ---
 
 ## API
@@ -145,10 +149,10 @@ The backend connects to MySQL using these settings (in `src/main/resources/appli
 | `DB_USERNAME` | `root` |
 | `DB_PASSWORD` | `root` |
 | `SEED_DEMO_DATA` | `true` (create demo accounts) |
-| `DEMO_PASSWORD` | `Demo1234!` |
+| `DEMO_PASSWORD` | `Demo1234!` locally. Required on Cloud Run |
 | `COOKIE_SECURE` | `false` (set `true` when deployed over HTTPS) |
 | `APP_TIME_ZONE` | `America/New_York` |
-| `JOURNAL_KEY` | *(none: a development key is used and a warning is logged)*. Make one with `openssl rand -base64 32` and keep it in Secret Manager. Losing it makes old journal entries unreadable |
+| `JOURNAL_KEY` | *(none: a development key is used and a warning is logged; on Cloud Run the app won't start without it)*. Make one with `openssl rand -base64 32` and keep it in Secret Manager. Losing it makes old journal entries unreadable |
 
 For the hosted database, set these as environment variables on the hosting platform. **Never commit real passwords.**
 

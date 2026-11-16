@@ -20,6 +20,11 @@ import com.mentalhealth.mentalhealth_backend.repository.UserRepository;
  * Creates demo accounts for presentations (only if they don't exist yet).
  * Controlled by SEED_DEMO_DATA (default true) and DEMO_PASSWORD.
  * On a public website, set SEED_DEMO_DATA=false or use a private DEMO_PASSWORD.
+ *
+ * Locally, a missing DEMO_PASSWORD means "Demo1234!". On Cloud Run (K_SERVICE is set) a missing
+ * DEMO_PASSWORD stops the app, so the public default can never be used on the live site.
+ * Note: this only sets the password when an account is first created. Existing demo accounts
+ * keep the password they were created with.
  */
 @Component
 public class DemoDataSeeder implements CommandLineRunner {
@@ -32,17 +37,21 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final boolean enabled;
     private final String demoPassword;
+    private final String cloudRunService;
+    static final String LOCAL_DEFAULT_PASSWORD = "Demo1234!";
 
     public DemoDataSeeder(UserRepository userRepository, ClientProfileRepository clientProfileRepository,
             TherapistProfileRepository therapistProfileRepository, PasswordEncoder passwordEncoder,
             @Value("${app.seed-demo-data:false}") boolean enabled,
-            @Value("${app.demo-password:Demo1234!}") String demoPassword) {
+            @Value("${app.demo-password:}") String demoPassword,
+            @Value("${K_SERVICE:}") String cloudRunService) {
         this.userRepository = userRepository;
         this.clientProfileRepository = clientProfileRepository;
         this.therapistProfileRepository = therapistProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.enabled = enabled;
         this.demoPassword = demoPassword;
+        this.cloudRunService = cloudRunService;
     }
 
     @Override
@@ -50,6 +59,12 @@ public class DemoDataSeeder implements CommandLineRunner {
     public void run(String... args) {
         if (!enabled) {
             return;
+        }
+        if (demoPassword == null || demoPassword.isBlank()) {
+            if (cloudRunService != null && !cloudRunService.isBlank()) {
+                throw new IllegalStateException("DEMO_PASSWORD is not set. Add it from Secret Manager, "
+                        + "or set SEED_DEMO_DATA=false.");
+            }
         }
         therapist("dr.rivera", "Alex", "Rivera", "Anxiety, stress");
         therapist("dr.okafor", "Ngozi", "Okafor", "Depression, grief");
@@ -77,7 +92,8 @@ public class DemoDataSeeder implements CommandLineRunner {
     private User save(String username, String first, String last, String role, boolean verified) {
         User u = new User();
         u.setUsername(username);
-        u.setPasswordHash(passwordEncoder.encode(demoPassword));
+        u.setPasswordHash(passwordEncoder.encode(
+                demoPassword == null || demoPassword.isBlank() ? LOCAL_DEFAULT_PASSWORD : demoPassword));
         u.setFirstName(first);
         u.setLastName(last);
         u.setRole(role);

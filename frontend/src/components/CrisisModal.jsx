@@ -10,10 +10,37 @@ export default function CrisisModal({ user, onClose }) {
   const isPatient = user && user.role !== "Therapist";
 
   useEffect(() => {
-    dialogRef.current?.focus();
-    const onKey = (e) => e.key === "Escape" && onClose();
+    const opener = document.activeElement; // put focus back here when the dialog closes
+    const dialog = dialogRef.current;
+    dialog?.focus();
+    const scroll = document.body.style.overflow;
+    document.body.style.overflow = "hidden"; // the page behind doesn't scroll
+
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !dialog) return;
+      // Keep Tab inside the dialog
+      const items = dialog.querySelectorAll("a[href], button:not([disabled])");
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = scroll;
+      if (opener instanceof HTMLElement) opener.focus();
+    };
   }, [onClose]);
 
   async function notifyTherapist() {

@@ -35,6 +35,9 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
+            // Don't remember "the page you wanted" for logged-out visitors: that would create a
+            // database session row for every unauthenticated request
+            .requestCache(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 // Public: anyone, logged in or not
                 .requestMatchers("/api/auth/**", "/api/home", "/api/resources", "/api/therapists").permitAll()

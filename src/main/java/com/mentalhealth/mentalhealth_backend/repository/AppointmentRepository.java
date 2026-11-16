@@ -25,6 +25,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findForClientWithStatus(@Param("clientId") Integer clientId,
             @Param("status") AppointmentStatus status);
 
-    @Query("select count(a) > 0 from Appointment a where a.client.userId = :clientId and a.therapist.userId = :therapistId")
-    boolean existsBetween(@Param("clientId") Integer clientId, @Param("therapistId") Integer therapistId);
+    /** True if the client has a scheduled or completed (not cancelled) session with this therapist. */
+    @Query("select count(a) > 0 from Appointment a where a.client.userId = :clientId and a.therapist.userId = :therapistId"
+            + " and a.status <> :cancelled")
+    boolean existsActiveBetween(@Param("clientId") Integer clientId, @Param("therapistId") Integer therapistId,
+            @Param("cancelled") AppointmentStatus cancelled);
 }

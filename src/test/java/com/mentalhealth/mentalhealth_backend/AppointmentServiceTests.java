@@ -111,4 +111,24 @@ class AppointmentServiceTests {
         crisisService.resolve(therapist.getUserId(), patient.getUserId());
         assertEquals(0, crisisService.alertsFor(therapist.getUserId()).size());
     }
+
+    @Test
+    void aPatientCanHaveAtMostThreeUpcomingSessions() {
+        for (int day = 0; day < 3; day++) {
+            appointmentService.book(patient.getUserId(), therapist.getUserId(), nextWeek.plusDays(day), 50);
+        }
+        ApiException e = assertThrows(ApiException.class, () ->
+                appointmentService.book(patient.getUserId(), therapist.getUserId(), nextWeek.plusDays(3), 50));
+        assertEquals(HttpStatus.CONFLICT, e.getStatus());
+    }
+
+    @Test
+    void aCancelledSessionDoesNotMakeSomeoneYourTherapist() {
+        Appointment a = appointmentService.book(patient.getUserId(), therapist.getUserId(), nextWeek, 50);
+        appointmentService.cancel(patient.getUserId(), a.getAppointmentId());
+
+        assertFalse(crisisService.raiseAlert(patient.getUserId()).notified());
+        assertEquals(0, crisisService.alertsFor(therapist.getUserId()).size());
+        assertThrows(ApiException.class, () -> crisisService.resolve(therapist.getUserId(), patient.getUserId()));
+    }
 }
