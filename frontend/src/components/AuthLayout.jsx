@@ -4,7 +4,7 @@ import CrisisButton from "./CrisisButton.jsx";
 import { HeartIcon } from "./Icons.jsx";
 
 // Green panel on the left, form on the right (stacks on phones)
-export default function AuthLayout({ onCrisis, children }) {
+export default function AuthLayout({ onCrisis, onBack, children }) {
   const [welcome, setWelcome] = useState("");
 
   useEffect(() => {
@@ -28,6 +28,11 @@ export default function AuthLayout({ onCrisis, children }) {
         </p>
       </aside>
       <main className="auth-main">
+        {onBack && (
+          <button type="button" className="link-button auth-back" onClick={onBack}>
+            ← Back to home
+          </button>
+        )}
         <CrisisButton onClick={onCrisis} className="auth-crisis" />
         {children}
       </main>

@@ -4,6 +4,7 @@ import AuthLayout from "./components/AuthLayout.jsx";
 import CrisisModal from "./components/CrisisModal.jsx";
 import Footer from "./components/Footer.jsx";
 import Header from "./components/Header.jsx";
+import LandingPage from "./components/LandingPage.jsx";
 import LoginPage from "./components/LoginPage.jsx";
 import PatientHome from "./components/PatientHome.jsx";
 import RecoveryCode from "./components/RecoveryCode.jsx";
@@ -13,7 +14,7 @@ import TherapistDashboard from "./components/TherapistDashboard.jsx";
 export default function App() {
   // undefined = still checking, null = signed out, object = signed in
   const [user, setUser] = useState(undefined);
-  const [authView, setAuthView] = useState("login"); // "login" | "register"
+  const [authView, setAuthView] = useState("landing"); // "landing" | "login" | "register" | "anonymous"
   const [recovery, setRecovery] = useState(null); // shown once after starting anonymously
   const [crisisOpen, setCrisisOpen] = useState(false);
 
@@ -26,7 +27,7 @@ export default function App() {
       await logout();
     } finally {
       setUser(null);
-      setAuthView("login");
+      setAuthView("landing");
     }
   }
 
@@ -37,10 +38,25 @@ export default function App() {
     return <p className="loading">Loading...</p>;
   }
 
+  // Signed out: the public home page comes first
+  if (!user && !recovery && authView === "landing") {
+    return (
+      <>
+        <LandingPage
+          onLogin={() => setAuthView("login")}
+          onRegister={() => setAuthView("register")}
+          onAnonymous={() => setAuthView("anonymous")}
+          onCrisis={openCrisis}
+        />
+        {crisis}
+      </>
+    );
+  }
+
   if (!user || recovery) {
     return (
       <>
-        <AuthLayout onCrisis={openCrisis}>
+        <AuthLayout onCrisis={openCrisis} onBack={recovery ? null : () => setAuthView("landing")}>
           {recovery ? (
             <RecoveryCode
               username={recovery.username}
@@ -50,8 +66,10 @@ export default function App() {
                 setRecovery(null);
               }}
             />
-          ) : authView === "login" ? (
+          ) : authView === "login" || authView === "anonymous" ? (
             <LoginPage
+              key={authView}
+              startAnonymous={authView === "anonymous"}
               onLoggedIn={setUser}
               onAnonymousStarted={setRecovery}
               onShowRegister={() => setAuthView("register")}
