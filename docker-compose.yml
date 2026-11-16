@@ -1,12 +1,41 @@
 # Runs the whole app with one command:  docker compose up --build
 #   Frontend: http://localhost:3000
 #   Backend:  http://localhost:8080/api/resources
+#   MySQL:    localhost:3306  (user: root, password: root, database: mental_health_db)
+#
+# Only need the database (e.g. while running the backend from IntelliJ)?
+#   docker compose up -d mysql
 
 services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root      # local development only
+      MYSQL_DATABASE: mental_health_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql    # keeps your data between restarts
+      # Runs database/schema.sql the FIRST time the database is created.
+      # To rebuild the tables after schema.sql changes:  docker compose down -v
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   backend:
     build: .
     ports:
       - "8080:8080"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/mental_health_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
@@ -14,3 +43,6 @@ services:
       - "3000:80"
     depends_on:
       - backend
+
+volumes:
+  mysql-data:

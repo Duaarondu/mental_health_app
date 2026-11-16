@@ -3,6 +3,7 @@
 A mental health support app where users can browse resources and book appointments.
 
 - **Backend:** Java 21, Spring Boot (REST API on port 8080)
+- **Database:** MySQL 8 (Spring Data JPA)
 - **Frontend:** React + Vite (dev server on port 5173)
 - **Docker:** runs both with one command
 - **CI/CD:** GitHub Actions builds and tests every pull request, and publishes Docker images when code is merged to `main`
@@ -25,6 +26,7 @@ mental_health_app/
 │   ├── src/api.js                            # All calls to the backend
 │   ├── src/App.jsx                           # Main component, shared state
 │   └── src/components/                       # Header, ResourceList, BookingForm, AppointmentList, Footer
+├── database/schema.sql                        # MySQL tables (source of truth)
 ├── Dockerfile                                # Backend image
 ├── frontend/Dockerfile                       # Frontend image (nginx)
 ├── docker-compose.yml                        # Runs both together
@@ -37,7 +39,7 @@ mental_health_app/
 
 ### Option 1: Docker (easiest, no Java or Node needed)
 
-Install [Docker Desktop](https://www.docker.com/products/docker-desktop/), then from the project folder:
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/), then from the project folder (this starts MySQL, the backend and the frontend):
 
 ```
 docker compose up --build
@@ -50,7 +52,15 @@ Stop it with `Ctrl + C`.
 
 ### Option 2: Run locally (for development)
 
-You need **JDK 21 or newer** and **Node.js 20.19 or newer**.
+You need **JDK 21 or newer**, **Node.js 20.19 or newer**, and a **MySQL** database.
+
+**Start MySQL** (easiest with Docker):
+```
+docker compose up -d mysql
+```
+This also creates all the tables from `database/schema.sql`.
+
+No Docker? Install MySQL Server locally with user `root` / password `root`, run `database/schema.sql` once (for example in MySQL Workbench), or point the backend at another database with the `DB_URL`, `DB_USERNAME` and `DB_PASSWORD` environment variables.
 
 **Terminal 1: backend**
 ```
@@ -84,7 +94,21 @@ Open http://localhost:5173. Vite forwards `/api` requests to the backend, so bot
 | GET | `/api/appointments` | All booked appointments |
 | POST | `/api/appointments` | Book an appointment. Body: `{"type": "Counseling", "date": "2026-11-20", "time": "10:00"}` |
 
-Appointments are stored in memory, so they reset when the backend restarts.
+## Database
+
+The backend connects to MySQL using these settings (in `src/main/resources/application.properties`):
+
+| Variable | Default (local) |
+|---|---|
+| `DB_URL` | `jdbc:mysql://localhost:3306/mental_health_db?...` |
+| `DB_USERNAME` | `root` |
+| `DB_PASSWORD` | `root` |
+
+For the hosted database, set these as environment variables on the hosting platform. **Never commit real passwords.**
+
+**Schema:** the tables are defined in [`database/schema.sql`](database/schema.sql). Hibernate does not create or change tables (`ddl-auto=validate`); it only checks that the Java `@Entity` classes match them. To change the database, edit `schema.sql` in a pull request. With Docker, run `docker compose down -v` and then `docker compose up -d mysql` to rebuild the tables (this deletes local data).
+
+Tests and CI use an in-memory H2 database (`src/test/resources/application-test.properties`), so they don't need MySQL.
 
 ---
 
