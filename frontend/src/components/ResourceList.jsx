@@ -1,22 +1,28 @@
-// Short descriptions shown under each resource name from the backend.
+import { useEffect, useState } from "react";
+import { getResources } from "../api.js";
+
 const DESCRIPTIONS = {
-  Counseling: "Talk one-on-one with a trained counselor in a safe, confidential space.",
-  "Stress Management": "Learn practical techniques to handle pressure, anxiety, and burnout.",
-  "Support Groups": "Connect with others who understand what you're going through.",
+  Counseling: "One-on-one sessions with a licensed therapist",
+  "Stress Management": "Breathing, sleep and coping techniques",
+  "Support Groups": "Talk with others who understand",
 };
 
-export default function ResourceList({ resources }) {
+export default function ResourceList() {
+  const [resources, setResources] = useState([]);
+
+  useEffect(() => {
+    getResources().then(setResources).catch(() => setResources([]));
+  }, []);
+
   return (
-    <section id="resources">
+    <section className="card stack">
       <h2>Resources</h2>
-      <div className="cards">
-        {resources.map((name) => (
-          <div className="card" key={name}>
-            <h3>{name}</h3>
-            <p>{DESCRIPTIONS[name] || "Learn more about this resource."}</p>
-          </div>
-        ))}
-      </div>
+      {resources.map((name) => (
+        <div className="resource" key={name}>
+          <strong>{name}</strong>
+          <span>{DESCRIPTIONS[name] || "Learn more about this resource."}</span>
+        </div>
+      ))}
     </section>
   );
 }

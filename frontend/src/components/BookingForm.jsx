@@ -1,82 +1,80 @@
-import { useState } from "react";
-import { bookAppointment } from "../api.js";
+import { useEffect, useState } from "react";
+import { bookAppointment, getTherapists } from "../api.js";
+import { todayString } from "../format.js";
 
-// Today's date as "YYYY-MM-DD", used to block past dates.
-function todayString() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-const EMPTY_FORM = { type: "", date: "", time: "" };
-
-export default function BookingForm({ resources, onBooked }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+export default function BookingForm({ onBooked }) {
+  const [therapists, setTherapists] = useState([]);
+  const [form, setForm] = useState({ therapistId: "", date: "", time: "", duration: "50" });
   const [message, setMessage] = useState({ text: "", kind: "" });
+  const [busy, setBusy] = useState(false);
 
-  // One change handler for all three inputs, using each input's "name".
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
+  useEffect(() => {
+    getTherapists().then(setTherapists).catch(() => setTherapists([]));
+  }, []);
+
+  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   async function handleSubmit(e) {
-    e.preventDefault(); // stop the page from reloading
+    e.preventDefault();
+    setBusy(true);
+    setMessage({ text: "", kind: "" });
     try {
-      const text = await bookAppointment(form); // "Appointment booked successfully!"
-      setMessage({ text, kind: "success" });
-      setForm(EMPTY_FORM);
-      onBooked(); // tell App to reload the appointment list
+      await bookAppointment(Number(form.therapistId), `${form.date}T${form.time}`, Number(form.duration));
+      setMessage({ text: "Session booked.", kind: "success" });
+      setForm({ ...form, date: "", time: "" });
+      onBooked();
     } catch (err) {
-      console.error(err);
-      setMessage({ text: "Something went wrong. Please try again.", kind: "error" });
+      setMessage({ text: err.message, kind: "error" });
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <section id="book">
-      <h2>Book an Appointment</h2>
-      <form className="panel" onSubmit={handleSubmit}>
-        <label htmlFor="type">Type of appointment</label>
-        <select id="type" name="type" value={form.type} onChange={handleChange} required>
-          <option value="">Choose one...</option>
-          {resources.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
-
-        <div className="row">
-          <div>
-            <label htmlFor="date">Date</label>
-            <input
-              type="date"
-              id="date"
-              name="date"
-              min={todayString()}
-              value={form.date}
-              onChange={handleChange}
-              required
-            />
+    <form className="card stack booking" onSubmit={handleSubmit}>
+      <h2>Book a session</h2>
+      {therapists.length === 0 ? (
+        <p className="muted">No therapists are available to book yet.</p>
+      ) : (
+        <>
+          <div className="row">
+            <div className="field grow-2">
+              <label htmlFor="book-ther">Therapist</label>
+              <select id="book-ther" value={form.therapistId} onChange={set("therapistId")} required>
+                <option value="">Choose a therapist</option>
+                {therapists.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}{t.specializations ? ` · ${t.specializations}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field grow">
+              <label htmlFor="book-date">Date</label>
+              <input id="book-date" type="date" min={todayString()} value={form.date} onChange={set("date")} required />
+            </div>
+            <div className="field grow">
+              <label htmlFor="book-time">Time</label>
+              <input id="book-time" type="time" step="900" value={form.time} onChange={set("time")} required />
+            </div>
+            <div className="field grow">
+              <label htmlFor="book-dur">Length</label>
+              <select id="book-dur" value={form.duration} onChange={set("duration")}>
+                <option value="30">30 min</option>
+                <option value="50">50 min</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label htmlFor="time">Time</label>
-            <input
-              type="time"
-              id="time"
-              name="time"
-              value={form.time}
-              onChange={handleChange}
-              required
-            />
+          <div className="row align-center">
+            <button type="submit" className="button primary" disabled={busy}>
+              {busy ? "Booking..." : "Book session"}
+            </button>
+            {message.text && (
+              <p className={message.kind === "error" ? "error-text" : "success-text"} role="status">{message.text}</p>
+            )}
           </div>
-        </div>
-
-        <button type="submit" className="btn">
-          Book appointment
-        </button>
-        <p className={`message ${message.kind}`}>{message.text}</p>
-      </form>
-    </section>
+        </>
+      )}
+    </form>
   );
 }

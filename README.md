@@ -20,12 +20,16 @@ mental_health_app/
 │   ├── MentalhealthBackendApplication.java   # Starts the Spring Boot server
 │   ├── Home_Controller.java                  # GET  /api/home
 │   ├── Resource_Controller.java              # GET  /api/resources
-│   ├── Appointment_Controller.java           # GET/POST /api/appointments
-│   └── Appointment.java                      # Appointment model (type, date, time)
+│   ├── controller/                           # Auth, appointments, therapists, crisis endpoints
+│   ├── service/                              # Business rules (booking validation, accounts, crisis alerts)
+│   ├── model/                                # Entities mapped to database/schema.sql
+│   ├── repository/                           # Database queries (Spring Data JPA)
+│   ├── security/                             # Spring Security: roles, BCrypt, sessions
+│   └── config/DemoDataSeeder.java            # Demo accounts for presentations
 ├── frontend/
 │   ├── src/api.js                            # All calls to the backend
 │   ├── src/App.jsx                           # Main component, shared state
-│   └── src/components/                       # Header, ResourceList, BookingForm, AppointmentList, Footer
+│   └── src/components/                       # Login, sign-up, patient home, therapist dashboard, crisis screen
 ├── database/schema.sql                        # MySQL tables (source of truth)
 ├── Dockerfile                                # Backend image
 ├── frontend/Dockerfile                       # Frontend image (nginx)
@@ -85,14 +89,48 @@ Open http://localhost:5173. Vite forwards `/api` requests to the backend, so bot
 
 ---
 
+## Accounts and login
+
+There are three kinds of users:
+
+| Account | How they sign in | What they can do |
+|---|---|---|
+| **Patient** | Username + password | Book and cancel sessions, press "Let my therapist know" on the crisis screen |
+| **Therapist** | Username + password (Therapist toggle) | See their schedule, see crisis alerts from their own patients. New therapists must be verified (`USER.isVerified = TRUE`) before patients can book them |
+| **Anonymous** | "Continue anonymously", with an optional nickname | Same as a patient, but therapists only see the nickname. They get a one-time username and recovery code to come back later |
+
+Passwords are stored as BCrypt hashes. Logins use a session cookie (HttpOnly, SameSite=Strict) stored in the database, so users stay signed in across restarts.
+
+**Demo accounts** (created on startup when `SEED_DEMO_DATA=true`, the default), all with password `Demo1234!` unless `DEMO_PASSWORD` is set:
+
+| Username | Role |
+|---|---|
+| `dr.rivera`, `dr.okafor`, `dr.chen` | Verified therapists |
+| `jordan` | Patient |
+
+On a public website, set `SEED_DEMO_DATA=false` or choose a private `DEMO_PASSWORD`.
+
+---
+
 ## API
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/home` | Welcome message |
-| GET | `/api/resources` | List of resources |
-| GET | `/api/appointments` | All booked appointments |
-| POST | `/api/appointments` | Book an appointment. Body: `{"type": "Counseling", "date": "2026-11-20", "time": "10:00"}` |
+| Method | Endpoint | Who | Description |
+|---|---|---|---|
+| POST | `/api/auth/register` | Anyone | `{username, password, firstName, lastName, accountType: "patient" or "therapist", specializations}` |
+| POST | `/api/auth/login` | Anyone | `{username, password, accountType}` |
+| POST | `/api/auth/anonymous` | Anyone | `{nickname}`. Returns a one-time `recoveryCode` |
+| GET | `/api/auth/me` | Anyone | The signed-in user, or 401 |
+| POST | `/api/auth/logout` | Signed in | Ends the session |
+| GET | `/api/home`, `/api/resources` | Anyone | Welcome message, list of resources |
+| GET | `/api/therapists` | Anyone | Verified therapists |
+| GET | `/api/appointments` | Signed in | Patients: their sessions. Therapists: sessions booked with them |
+| POST | `/api/appointments` | Patients | `{therapistId, scheduledTime: "2026-11-20T15:00", duration: 30 or 50}`. Rejects past times, unverified therapists and double bookings |
+| POST | `/api/appointments/{id}/cancel` | That patient or therapist | Cancel a scheduled session |
+| POST | `/api/crisis/alert` | Patients | "Let my therapist know": sets `CLIENT_PROFILE.isCrisisActive` |
+| GET | `/api/therapist/alerts` | Therapists | Their patients who asked for help |
+| POST | `/api/therapist/alerts/{clientId}/resolve` | Therapists | Mark an alert as followed up |
+
+---
 
 ## Database
 
@@ -103,6 +141,10 @@ The backend connects to MySQL using these settings (in `src/main/resources/appli
 | `DB_URL` | `jdbc:mysql://localhost:3306/mental_health_db?...` |
 | `DB_USERNAME` | `root` |
 | `DB_PASSWORD` | `root` |
+| `SEED_DEMO_DATA` | `true` (create demo accounts) |
+| `DEMO_PASSWORD` | `Demo1234!` |
+| `COOKIE_SECURE` | `false` (set `true` when deployed over HTTPS) |
+| `APP_TIME_ZONE` | `America/New_York` |
 
 For the hosted database, set these as environment variables on the hosting platform. **Never commit real passwords.**
 
