@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,9 @@ import com.mentalhealth.mentalhealth_backend.repository.UserRepository;
 public class JournalService {
 
     public static final int MAX_LENGTH = 5000;
+    public static final String UNREADABLE = "(This entry can't be opened.)";
+
+    private static final Logger log = LoggerFactory.getLogger(JournalService.class);
 
     private final JournalEntryRepository journalRepository;
     private final UserRepository userRepository;
@@ -73,7 +78,13 @@ public class JournalService {
     }
 
     private JournalEntryDto toDto(JournalEntry e) {
-        return new JournalEntryDto(e.getEntryId(), e.getEntryDate(), Math.round(e.getMoodScore()),
-                crypto.decrypt(e.getEncryptedContent()));
+        String text;
+        try {
+            text = crypto.decrypt(e.getEncryptedContent());
+        } catch (IllegalStateException ex) {
+            log.warn("Journal entry {} could not be decrypted", e.getEntryId());
+            text = UNREADABLE;
+        }
+        return new JournalEntryDto(e.getEntryId(), e.getEntryDate(), Math.round(e.getMoodScore()), text);
     }
 }

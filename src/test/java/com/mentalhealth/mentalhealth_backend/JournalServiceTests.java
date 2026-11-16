@@ -108,4 +108,16 @@ class JournalServiceTests {
         String tampered = new String(chars);
         assertThrows(IllegalStateException.class, () -> crypto.decrypt(tampered));
     }
+
+    @Test
+    void oneDamagedEntryDoesNotHideTheRest() {
+        JournalEntryDto good = journalService.add(patient.getUserId(), 4, "Still readable");
+        JournalEntryDto bad = journalService.add(patient.getUserId(), 2, "Will be damaged");
+        journalRepository.findById(bad.id()).orElseThrow().setEncryptedContent("v1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+        List<JournalEntryDto> mine = journalService.listFor(patient.getUserId());
+        assertEquals(2, mine.size());
+        assertTrue(mine.stream().anyMatch(e -> e.id().equals(good.id()) && e.content().equals("Still readable")));
+        assertTrue(mine.stream().anyMatch(e -> e.id().equals(bad.id()) && e.content().equals(JournalService.UNREADABLE)));
+    }
 }

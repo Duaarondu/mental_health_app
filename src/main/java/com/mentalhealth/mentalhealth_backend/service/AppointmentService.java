@@ -21,6 +21,8 @@ import com.mentalhealth.mentalhealth_backend.repository.UserRepository;
 public class AppointmentService {
 
     public static final Set<Integer> ALLOWED_DURATIONS = Set.of(30, 50);
+    /** Stops one account from filling a therapist's whole calendar. */
+    public static final int MAX_UPCOMING_PER_PATIENT = 3;
 
     private final AppointmentRepository appointmentRepository;
     private final UserRepository userRepository;
@@ -65,6 +67,13 @@ public class AppointmentService {
             throw ApiException.badRequest("Sessions are 30 or 50 minutes long.");
         }
 
+        List<Appointment> mine = appointmentRepository.findForClientWithStatus(clientId, AppointmentStatus.Scheduled);
+        long upcoming = mine.stream().filter(a -> a.getScheduledTime().isAfter(now)).count();
+        if (upcoming >= MAX_UPCOMING_PER_PATIENT) {
+            throw ApiException.conflict("You can have up to " + MAX_UPCOMING_PER_PATIENT
+                    + " upcoming sessions. Cancel one to book another.");
+        }
+
         LocalDateTime end = start.plusMinutes(duration);
         for (Appointment a : appointmentRepository.findForTherapistWithStatus(therapistId, AppointmentStatus.Scheduled)) {
             if (overlaps(a, start, end)) {
@@ -72,7 +81,7 @@ public class AppointmentService {
                         + " already has a session at that time. Please pick another time.");
             }
         }
-        for (Appointment a : appointmentRepository.findForClientWithStatus(clientId, AppointmentStatus.Scheduled)) {
+        for (Appointment a : mine) {
             if (overlaps(a, start, end)) {
                 throw ApiException.conflict("You already have a session at that time.");
             }

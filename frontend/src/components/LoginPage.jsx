@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { login, startAnonymous } from "../api.js";
+import { login, startAnonymous as createAnonymousAccount } from "../api.js";
 import AccountTypeToggle from "./AccountTypeToggle.jsx";
 
-export default function LoginPage({ onLoggedIn, onAnonymousStarted, onShowRegister, startAnonymous = false }) {
+export default function LoginPage({ onLoggedIn, onAnonymousStarted, onShowRegister, startAnonymous = false, notice }) {
   const [accountType, setAccountType] = useState("patient");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +31,7 @@ export default function LoginPage({ onLoggedIn, onAnonymousStarted, onShowRegist
     setAnonError("");
     setBusy(true);
     try {
-      onAnonymousStarted(await startAnonymous(nickname));
+      onAnonymousStarted(await createAnonymousAccount(nickname));
     } catch (err) {
       setAnonError(err.message);
     } finally {
@@ -42,6 +42,7 @@ export default function LoginPage({ onLoggedIn, onAnonymousStarted, onShowRegist
   return (
     <div className="card auth-card">
       <h2>Welcome back</h2>
+      {notice && <p className="info-banner" role="status">{notice}</p>}
       <form onSubmit={handleLogin} className="stack">
         <AccountTypeToggle value={accountType} onChange={setAccountType} />
         <div className="field">

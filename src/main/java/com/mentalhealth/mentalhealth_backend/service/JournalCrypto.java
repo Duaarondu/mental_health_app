@@ -39,9 +39,19 @@ public class JournalCrypto {
     private final SecretKey key;
     private final SecureRandom random = new SecureRandom();
 
-    public JournalCrypto(@Value("${app.journal-key:}") String base64Key) {
+    /**
+     * @param cloudRunService Cloud Run sets K_SERVICE on every server it runs. There, a missing key
+     *                        stops the app instead of quietly using the public development key.
+     */
+    public JournalCrypto(@Value("${app.journal-key:}") String base64Key,
+            @Value("${K_SERVICE:}") String cloudRunService) {
         byte[] raw;
         if (base64Key == null || base64Key.isBlank()) {
+            if (cloudRunService != null && !cloudRunService.isBlank()) {
+                throw new IllegalStateException("JOURNAL_KEY is not set. Add it from Secret Manager: "
+                        + "gcloud run services update " + cloudRunService
+                        + " --update-secrets JOURNAL_KEY=journal-key:latest");
+            }
             log.warn("JOURNAL_KEY is not set: journal entries are encrypted with a built-in development key. "
                     + "Set JOURNAL_KEY on the hosted server.");
             raw = sha256("mindcare-development-key-do-not-use-in-production");

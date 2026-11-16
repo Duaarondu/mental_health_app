@@ -86,4 +86,12 @@ class AuthServiceTests {
         AnonymousAccount acc = authService.createAnonymous("  ");
         assertFalse(acc.user().getFirstName().isBlank());
     }
+
+    @Test
+    void passwordsLongerThan72BytesAreRejected() {
+        // 40 characters, but 80 bytes: BCrypt would silently ignore the end of it
+        String accented = "\u00e9".repeat(40);
+        assertThrows(ApiException.class, () ->
+                authService.register(new RegisterRequest("accent.user", accented, "A", "User", "patient", null)));
+    }
 }

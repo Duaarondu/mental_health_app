@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getMe, logout } from "./api.js";
 import AuthLayout from "./components/AuthLayout.jsx";
 import CrisisModal from "./components/CrisisModal.jsx";
@@ -19,6 +19,26 @@ export default function App() {
   const [crisisOpen, setCrisisOpen] = useState(false);
   const [page, setPage] = useState("dashboard"); // signed in: "home" | "dashboard"
 
+  const [notice, setNotice] = useState(""); // e.g. "Your session ended"
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  // api.js fires this when the server says we're no longer signed in
+  useEffect(() => {
+    const onSessionEnded = () => {
+      if (!userRef.current) return; // already signed out
+      setUser(null);
+      setRecovery(null);
+      setNotice("Your session ended. Please sign in again.");
+      setAuthView("login");
+      setPage("dashboard");
+    };
+    window.addEventListener("mindcare:session-ended", onSessionEnded);
+    return () => window.removeEventListener("mindcare:session-ended", onSessionEnded);
+  }, []);
+
   useEffect(() => {
     getMe().then(setUser).catch(() => setUser(null));
   }, []);
@@ -35,11 +55,13 @@ export default function App() {
 
   const signedIn = (u) => {
     setUser(u);
+    setNotice("");
     setPage("dashboard");
   };
 
   const openCrisis = () => setCrisisOpen(true);
-  const crisis = crisisOpen && <CrisisModal user={user} onClose={() => setCrisisOpen(false)} />;
+  const closeCrisis = useCallback(() => setCrisisOpen(false), []);
+  const crisis = crisisOpen && <CrisisModal user={user} onClose={closeCrisis} />;
 
   if (user === undefined) {
     return <p className="loading">Loading...</p>;
@@ -63,7 +85,10 @@ export default function App() {
   if (!user || recovery) {
     return (
       <>
-        <AuthLayout onCrisis={openCrisis} onBack={recovery ? null : () => setAuthView("landing")}>
+        <AuthLayout onCrisis={openCrisis} onBack={recovery ? null : () => {
+          setNotice("");
+          setAuthView("landing");
+        }}>
           {recovery ? (
             <RecoveryCode
               username={recovery.username}
@@ -77,6 +102,7 @@ export default function App() {
             <LoginPage
               key={authView}
               startAnonymous={authView === "anonymous"}
+              notice={notice}
               onLoggedIn={signedIn}
               onAnonymousStarted={setRecovery}
               onShowRegister={() => setAuthView("register")}

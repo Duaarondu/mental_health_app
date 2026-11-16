@@ -28,6 +28,11 @@ async function request(path, { method = "GET", body } = {}) {
   }
 
   if (!res.ok) {
+    // Logged out behind our back (session expired, server restarted): tell App to show the login page.
+    // /auth/... calls handle their own 401s (wrong password, "not signed in yet").
+    if (res.status === 401 && !path.startsWith("/auth/")) {
+      window.dispatchEvent(new Event("mindcare:session-ended"));
+    }
     const message =
       (data && typeof data === "object" && data.error) ||
       (res.status === 401 ? "Please sign in." : `Something went wrong (error ${res.status}).`);

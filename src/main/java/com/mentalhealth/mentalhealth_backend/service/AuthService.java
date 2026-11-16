@@ -1,5 +1,6 @@
 package com.mentalhealth.mentalhealth_backend.service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.regex.Pattern;
 
@@ -22,6 +23,11 @@ import com.mentalhealth.mentalhealth_backend.repository.UserRepository;
 public class AuthService {
 
     private static final Pattern USERNAME = Pattern.compile("^[A-Za-z0-9_.-]{3,50}$");
+
+    /** Usernames are plain letters, numbers, dots, dashes and underscores (anonymous ones too). */
+    public static boolean isValidUsername(String username) {
+        return username != null && USERNAME.matcher(username).matches();
+    }
     private static final String CODE_CHARS = "abcdefghjkmnpqrstuvwxyz23456789"; // no look-alikes (l/1, o/0)
     private static final String[] ADJECTIVES = {"Quiet", "Gentle", "Calm", "Bright", "Steady", "Kind", "Brave", "Soft"};
     private static final String[] NOUNS = {"Fox", "River", "Pine", "Sparrow", "Harbor", "Willow", "Otter", "Meadow"};
@@ -61,7 +67,8 @@ public class AuthService {
         if (username.toLowerCase().startsWith("anon-")) {
             throw ApiException.badRequest("Usernames starting with \"anon-\" are reserved.");
         }
-        if (password.length() < 8 || password.length() > 72) {
+        // BCrypt only uses the first 72 bytes (accented letters and emoji take more than one byte each)
+        if (password.length() < 8 || password.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw ApiException.badRequest("Password must be 8 to 72 characters.");
         }
         if (firstName.isEmpty() || lastName.isEmpty() || firstName.length() > 50 || lastName.length() > 50) {
