@@ -42,9 +42,9 @@ class AppointmentServiceTests {
 
     @BeforeEach
     void setUp() {
-        patient = authService.register(new RegisterRequest("p1", "password123", "Pat", "One", "patient", null));
-        otherPatient = authService.register(new RegisterRequest("p2", "password123", "Pat", "Two", "patient", null));
-        therapist = authService.register(new RegisterRequest("t1", "password123", "Terry", "Ther", "therapist", "Anxiety"));
+        patient = authService.register(new RegisterRequest("patient1", "password123", "Pat", "One", "patient", null));
+        otherPatient = authService.register(new RegisterRequest("patient2", "password123", "Pat", "Two", "patient", null));
+        therapist = authService.register(new RegisterRequest("therapist1", "password123", "Terry", "Ther", "therapist", "Anxiety"));
         therapist.setIsVerified(true);
         userRepository.save(therapist);
         nextWeek = LocalDateTime.now().plusDays(7).withHour(15).withMinute(0).withSecond(0).withNano(0);
@@ -73,7 +73,7 @@ class AppointmentServiceTests {
     @Test
     void unverifiedTherapistsCannotBeBooked() {
         User newTherapist = authService.register(
-                new RegisterRequest("t2", "password123", "New", "Ther", "therapist", ""));
+                new RegisterRequest("therapist2", "password123", "New", "Ther", "therapist", ""));
         assertThrows(ApiException.class, () ->
                 appointmentService.book(patient.getUserId(), newTherapist.getUserId(), nextWeek, 50));
     }
